@@ -9,6 +9,7 @@ function love.load()
 	require "rocket"
 	
 	vsync = true
+	love.graphics.setDefaultFilter("nearest", "nearest", 1)
 	
 	autosize()
 	
@@ -165,7 +166,7 @@ function love.load()
 	
 	blockstartY = -64 --where new blocks are created
 	losingY = 0 --lose if block 1 collides above this line
-	blockmass = 5 --probably obsolete because body:setMassFromShapes()
+	blockmass = 5 --retained for gameplay tuning; bodies now use fixture densities / resetMassData
 	blockrot = 10
 	blockrestitution = 0.1
 	minmass = 1
@@ -498,10 +499,14 @@ function newPaddedImage(filename, s)
     if wp ~= w or hp ~= h then
         local padded = love.image.newImageData(wp, hp)
         padded:paste(source, 0, 0)
-        return love.graphics.newImage(padded)
+        local image = love.graphics.newImage(padded)
+        image:setFilter("nearest", "nearest")
+        return image
     end
    
-    return love.graphics.newImage(source)
+    local image = love.graphics.newImage(source)
+    image:setFilter("nearest", "nearest")
+    return image
 end
 
 function padImagedata(source) --returns image, not imagedata!
@@ -515,10 +520,14 @@ function padImagedata(source) --returns image, not imagedata!
     if wp ~= w or hp ~= h then
         local padded = love.image.newImageData(wp, hp)
         padded:paste(source, 0, 0)
-        return love.graphics.newImage(padded)
+        local image = love.graphics.newImage(padded)
+        image:setFilter("nearest", "nearest")
+        return image
     end
    
-    return love.graphics.newImage(source)
+    local image = love.graphics.newImage(source)
+    image:setFilter("nearest", "nearest")
+    return image
 end
 
 function newPaddedImageFont(filename, glyphs)
@@ -533,10 +542,14 @@ function newPaddedImageFont(filename, glyphs)
     if wp ~= w or hp ~= h then
         local padded = love.image.newImageData(wp, hp)
         padded:paste(source, 0, 0)
-        return love.graphics.newImageFont(padded, glyphs)
+        local font = love.graphics.newImageFont(padded, glyphs)
+        font:setFilter("nearest", "nearest")
+        return font
     end
 	
-    return love.graphics.newImageFont(source, glyphs)
+    local font = love.graphics.newImageFont(source, glyphs)
+    font:setFilter("nearest", "nearest")
+    return font
 end
 
 function scaleImagedata(imagedata, i)
@@ -797,6 +810,14 @@ function pythagoras(a, b)
 		c = -c
 	end
 	return c
+end
+
+function drawPixelText(text, x, y, s)
+	s = s or 1
+	for i = 1, #text do
+		local ch = text:sub(i, i)
+		love.graphics.print(ch, x + (i - 1) * 8 * s, y, 0, s)
+	end
 end
 
 function round(num, idp)

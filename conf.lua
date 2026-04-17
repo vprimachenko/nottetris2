@@ -1,6 +1,6 @@
 function love.conf(t)
 	t.identity = "not_tetris_2"
-	t.version = "11.4"
+	t.version = "11.5"
 	t.window.title = "Not Tetris 2"
 	t.window.width = 800
 	t.window.height = 720

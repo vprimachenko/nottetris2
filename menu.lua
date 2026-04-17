@@ -58,35 +58,35 @@ function menu_draw()
 		love.graphics.draw(gametype, 0, 0, 0, scale)
 		if selection > 2 then
 			if gameno == 1 then
-				love.graphics.print( "normal", 24*scale, 26*scale, 0, scale)
+				drawPixelText("normal", 24*scale, 26*scale, scale)
 			else
-				love.graphics.print( "stack ", 88*scale, 26*scale, 0, scale)
+				drawPixelText("stack ", 88*scale, 26*scale, scale)
 			end
 		else
 			if musicno == 1 then
-				love.graphics.print( "a-type", 24*scale, 60*scale, 0, scale)
+				drawPixelText("a-type", 24*scale, 60*scale, scale)
 			elseif musicno == 2 then
-				love.graphics.print( "b-type", 88*scale, 60*scale, 0, scale)
+				drawPixelText("b-type", 88*scale, 60*scale, scale)
 			elseif musicno == 3 then
-				love.graphics.print( "c-type", 24*scale, 76*scale, 0, scale)
+				drawPixelText("c-type", 24*scale, 76*scale, scale)
 			else
-				love.graphics.print( " off  ", 88*scale, 76*scale, 0, scale)
+				drawPixelText(" off  ", 88*scale, 76*scale, scale)
 			end
 		end
 		
 		if selectblink == true then
 			if selection ==1 then
-				love.graphics.print( "normal", 24*scale, 26*scale, 0, scale)
+				drawPixelText("normal", 24*scale, 26*scale, scale)
 			elseif selection == 2 then
-				love.graphics.print( "stack ", 88*scale, 26*scale, 0, scale)
+				drawPixelText("stack ", 88*scale, 26*scale, scale)
 			elseif selection == 3 then
-				love.graphics.print( "a-type", 24*scale, 60*scale, 0, scale)
+				drawPixelText("a-type", 24*scale, 60*scale, scale)
 			elseif selection == 4 then
-				love.graphics.print( "b-type", 88*scale, 60*scale, 0, scale)
+				drawPixelText("b-type", 88*scale, 60*scale, scale)
 			elseif selection == 5 then
-				love.graphics.print( "c-type", 24*scale, 76*scale, 0, scale)
+				drawPixelText("c-type", 24*scale, 76*scale, scale)
 			elseif selection == 6 then
-				love.graphics.print( " off  ", 88*scale, 76*scale, 0, scale)
+				drawPixelText(" off  ", 88*scale, 76*scale, scale)
 			end
 		end
 	----------------------------------------------
@@ -95,35 +95,35 @@ function menu_draw()
 		love.graphics.draw(mpmenu, 0, 0, 0, scale)
 		if selection > 2 then
 			if gameno == 1 then
-				love.graphics.print( "stack", 28*scale, 47*scale, 0, scale)
+				drawPixelText("stack", 28*scale, 47*scale, scale)
 			else
-				love.graphics.print( "invade", 88*scale, 47*scale, 0, scale)
+				drawPixelText("invade", 88*scale, 47*scale, scale)
 			end
 		else
 			if musicno == 1 then
-				love.graphics.print( "a-type", 24*scale, 81*scale, 0, scale)
+				drawPixelText("a-type", 24*scale, 81*scale, scale)
 			elseif musicno == 2 then
-				love.graphics.print( "b-type", 88*scale, 81*scale, 0, scale)
+				drawPixelText("b-type", 88*scale, 81*scale, scale)
 			elseif musicno == 3 then
-				love.graphics.print( "c-type", 24*scale, 97*scale, 0, scale)
+				drawPixelText("c-type", 24*scale, 97*scale, scale)
 			else
-				love.graphics.print( " off  ", 88*scale, 97*scale, 0, scale)
+				drawPixelText(" off  ", 88*scale, 97*scale, scale)
 			end
 		end
 		
 		if selectblink == true then
 			if selection ==1 then
-				love.graphics.print( "stack", 28*scale, 47*scale, 0, scale)
+				drawPixelText("stack", 28*scale, 47*scale, scale)
 			elseif selection == 2 then
-				love.graphics.print( "invade", 88*scale, 47*scale, 0, scale)
+				drawPixelText("invade", 88*scale, 47*scale, scale)
 			elseif selection == 3 then
-				love.graphics.print( "a-type", 24*scale, 81*scale, 0, scale)
+				drawPixelText("a-type", 24*scale, 81*scale, scale)
 			elseif selection == 4 then
-				love.graphics.print( "b-type", 88*scale, 81*scale, 0, scale)
+				drawPixelText("b-type", 88*scale, 81*scale, scale)
 			elseif selection == 5 then
-				love.graphics.print( "c-type", 24*scale, 97*scale, 0, scale)
+				drawPixelText("c-type", 24*scale, 97*scale, scale)
 			elseif selection == 6 then
-				love.graphics.print( " off  ", 88*scale, 97*scale, 0, scale)
+				drawPixelText(" off  ", 88*scale, 97*scale, scale)
 			end
 		end
 		
