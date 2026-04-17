@@ -233,7 +233,7 @@ function menu_update(dt)
 		currenttime = love.timer.getTime()
 		if currenttime - oldtime > creditsdelay then
 			gamestate = "title"
-			love.graphics.setBackgroundColor( 0, 0, 0)
+			setBackgroundColor255(0, 0, 0)
 			love.audio.play(musictitle)
 		end
 	end

@@ -228,7 +228,7 @@ function gameB_draw()
 	love.graphics.print( linesscore, 136*scale + offsetX, 80*scale, 0, scale)
 	-----------------------------------------------
 	
-	love.graphics.setColor(255, 0, 0)
+	setColor255(255, 0, 0)
 
 	--DEBUG--
 	
@@ -246,7 +246,7 @@ function gameB_draw()
 			end
 		end
 	
-	love.graphics.setColor(255, 255, 255)
+	setColor255(255, 255, 255)
 	
 	--FULLSCREEN OFFSET
 	if fullscreen then
@@ -271,34 +271,34 @@ function gameB_update(dt)
 	end
 
 	if gamestate == "gameB" then
-		if love.keyboard.isDown( "x" ) then
+		if controls.isDown("rotateright") then
 			if tetribodies[1]:getAngularVelocity() < 3 then
-				tetribodies[1]:applyTorque( 70 )
+				tetribodies[1]:applyTorque(controltorque)
 			end
 		end
-		if love.keyboard.isDown( "y" ) or love.keyboard.isDown( "z" ) or love.keyboard.isDown( "w" ) then
+		if controls.isDown("rotateleft") then
 			if tetribodies[1]:getAngularVelocity() > -3 then
-				tetribodies[1]:applyTorque( -70 )
+				tetribodies[1]:applyTorque(-controltorque)
 			end
 		end
 	
-		if love.keyboard.isDown( "left" ) then
+		if controls.isDown("left") then
 			local x, y = tetribodies[1]:getWorldCenter()
-			tetribodies[1]:applyForce( -70, 0, x, y )
+			tetribodies[1]:applyForce(-controlforce, 0, x, y)
 		end
-		if love.keyboard.isDown( "right" ) then
+		if controls.isDown("right") then
 			local x, y = tetribodies[1]:getWorldCenter()
-			tetribodies[1]:applyForce( 70, 0, x, y )
+			tetribodies[1]:applyForce(controlforce, 0, x, y)
 		end
 		
 		local x, y = tetribodies[1]:getLinearVelocity( )
-		if love.keyboard.isDown( "down" ) then
+		if controls.isDown("down") then
 			--commented part limits the blackfallspeed
 			if y > difficulty_speed*5 then
 				tetribodies[1]:setLinearVelocity(x, difficulty_speed*5)
 			else
 				local cx, cy = tetribodies[1]:getWorldCenter()
-				tetribodies[1]:applyForce( 0, 20, cx, cy )
+				tetribodies[1]:applyForce(0, softdropforce, cx, cy)
 			end
 		else
 			if y > difficulty_speed then

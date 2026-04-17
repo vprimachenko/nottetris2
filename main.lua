@@ -24,12 +24,12 @@ function love.load()
 	
 	if fullscreen == false then
 		if scale ~= 5 then
-			love.graphics.setMode( 160*scale, 144*scale, false, vsync, 0 )
+			applyWindowMode(160 * scale, 144 * scale, false, 0)
 		end
 	else
-		love.graphics.setMode( 0, 0, true, vsync, 0 )
+		applyWindowMode(0, 0, true, 0)
 		love.mouse.setVisible( false )
-		desktopwidth, desktopheight = love.graphics.getWidth(), love.graphics.getHeight()
+		desktopwidth, desktopheight = love.graphics.getDimensions()
 		saveoptions()
 		
 		suggestedscale = math.floor((desktopheight-50)/144)
@@ -93,7 +93,7 @@ function love.load()
 	musicoptions:setVolume( 1 )
 	musicoptions:setLooping( true )
 	
-	boot = love.audio.newSource( "sounds/boot.ogg")
+	boot = love.audio.newSource( "sounds/boot.ogg", "static")
 	blockfall = love.audio.newSource( "sounds/blockfall.ogg", "stream")
 	blockturn = love.audio.newSource( "sounds/turn.ogg", "stream")
 	blockmove = love.audio.newSource( "sounds/move.ogg", "stream")
@@ -133,7 +133,7 @@ function love.load()
 	math.randomseed( os.time() )
 	math.random();math.random();math.random() --discarding some as they seem to tend to unrandomness.
 	
-	love.graphics.setBackgroundColor( 255, 255, 255 )
+	setBackgroundColor255(255, 255, 255)
 
 	p1wins = 0
 	p2wins = 0
@@ -169,6 +169,9 @@ function love.load()
 	blockrot = 10
 	blockrestitution = 0.1
 	minmass = 1
+	controlforce = 280
+	controltorque = 1400
+	softdropforce = 80
 	
 	optionschoices = {"volume", "color", "scale", "fullscrn"}
 	
@@ -203,6 +206,81 @@ end
 
 function start()
 	menu_load()
+end
+
+local shapeBodies = setmetatable({}, {__mode = "k"})
+local shapeFixtures = setmetatable({}, {__mode = "k"})
+
+function registerShapeFixture(shape, fixture, body)
+	shapeBodies[shape] = body
+	shapeFixtures[shape] = fixture
+	return fixture
+end
+
+function clearShapeFixture(shape)
+	shapeBodies[shape] = nil
+	shapeFixtures[shape] = nil
+end
+
+function getShapeBody(shape)
+	return shapeBodies[shape]
+end
+
+function getShapeFixture(shape)
+	return shapeFixtures[shape]
+end
+
+function createFixture(body, shape, density, userData)
+	local fixture
+	if density == nil then
+		fixture = love.physics.newFixture(body, shape)
+	else
+		fixture = love.physics.newFixture(body, shape, density)
+	end
+	registerShapeFixture(shape, fixture, body)
+	if userData ~= nil then
+		fixture:setUserData(userData)
+	end
+	return fixture
+end
+
+function setColor255(r, g, b, a)
+	a = a or 255
+	love.graphics.setColor(r / 255, g / 255, b / 255, a / 255)
+end
+
+function setBackgroundColor255(r, g, b, a)
+	a = a or 255
+	love.graphics.setBackgroundColor(r / 255, g / 255, b / 255, a / 255)
+end
+
+function getPixel255(imagedata, x, y)
+	local r, g, b, a = imagedata:getPixel(x, y)
+	return r * 255, g * 255, b * 255, a * 255
+end
+
+function setPixel255(imagedata, x, y, r, g, b, a)
+	imagedata:setPixel(x, y, r / 255, g / 255, b / 255, (a or 255) / 255)
+end
+
+function applyWindowMode(width, height, fullscreen, msaa)
+	local flags = {
+		fullscreen = fullscreen,
+		vsync = vsync and 1 or 0,
+		msaa = msaa or 0
+	}
+	if fullscreen then
+		return love.window.setMode(0, 0, flags)
+	end
+	return love.window.setMode(width, height, flags)
+end
+
+function newBodyWithAngle(worldRef, x, y, angle, bodyType)
+	local body = love.physics.newBody(worldRef, x, y, bodyType or "dynamic")
+	if angle then
+		body:setAngle(angle)
+	end
+	return body
 end
 
 function loadimages()
@@ -382,19 +460,19 @@ function newImageData(path, s)
 	
 	for y = 0, height-1 do
 		for x = 0, width-1 do
-			local oldr, oldg, oldb, olda = imagedata:getPixel(x, y)
+			local oldr, oldg, oldb, olda = getPixel255(imagedata, x, y)
 			
 			if olda ~= 0 then
 				if oldr > 203 and oldr < 213 then --lightgrey
 					local r = 145 + rr*64
 					local g = 145 + rg*64
 					local b = 145 + rb*64
-					imagedata:setPixel(x, y, r, g, b, olda)
+					setPixel255(imagedata, x, y, r, g, b, olda)
 				elseif oldr > 107 and oldr < 117 then --darkgrey
 					local r = 73 + rr*43
 					local g = 73 + rg*43
 					local b = 73 + rb*43
-					imagedata:setPixel(x, y, r, g, b, olda)
+					setPixel255(imagedata, x, y, r, g, b, olda)
 				end
 			end
 		end
@@ -455,9 +533,7 @@ function newPaddedImageFont(filename, glyphs)
     if wp ~= w or hp ~= h then
         local padded = love.image.newImageData(wp, hp)
         padded:paste(source, 0, 0)
-		local image = love.graphics.newImage(padded)
-		image:setFilter("nearest", "nearest")
-        return love.graphics.newImageFont(image, glyphs)
+        return love.graphics.newImageFont(padded, glyphs)
     end
 	
     return love.graphics.newImageFont(source, glyphs)
@@ -529,7 +605,7 @@ function loadconfig()
 end
 
 function loadoptions()
-	if love.filesystem.exists("options.txt") then
+	if love.filesystem.getInfo("options.txt") then
 		local s = love.filesystem.read("options.txt")
 		local split1 = s:split("\n")
 		for i = 1, #split1 do
@@ -599,8 +675,7 @@ function saveoptions()
 end
 
 function autosize()
-	local modes = love.graphics.getModes()
-	desktopwidth, desktopheight = modes[1]["width"], modes[1]["height"]
+	desktopwidth, desktopheight = love.window.getDesktopDimensions()
 end
 
 function togglefullscreen(fullscr)
@@ -609,10 +684,10 @@ function togglefullscreen(fullscr)
 	if fullscr == false then
 		scale = suggestedscale
 		physicsscale = scale/4
-		love.graphics.setMode( 160*scale, 144*scale, false, vsync, 0 )
+		applyWindowMode(160 * scale, 144 * scale, false, 0)
 	else
-		love.graphics.setMode( 0, 0, true, vsync, 16 )
-		desktopwidth, desktopheight = love.graphics.getWidth(), love.graphics.getHeight()
+		applyWindowMode(0, 0, true, 16)
+		desktopwidth, desktopheight = love.graphics.getDimensions()
 		suggestedscale = math.min(math.floor((desktopheight-50)/144), math.floor((desktopwidth-10)/160))
 		suggestedscale = math.min(math.floor((desktopheight-50)/144), math.floor((desktopwidth-10)/160))
 		if suggestedscale > 5 then
@@ -635,7 +710,7 @@ function loadhighscores()
 		fileloc = "highscoresB.txt"
 	end
 	
-	if love.filesystem.exists( fileloc ) then
+	if love.filesystem.getInfo(fileloc) then
 		
 		highdata = love.filesystem.read( fileloc )
 		highdata = highdata:split(";")
@@ -685,7 +760,7 @@ function savehighscores()
 end
 
 function changescale(i)
-	love.graphics.setMode( 160*i, 144*i, false, vsync, 0 )
+	applyWindowMode(160 * i, 144 * i, false, 0)
 	nextpieceimg = {}
 	for j = 1, 7 do
 		nextpieceimg[j] = newPaddedImage( "graphics/pieces/"..j..".png", i )
@@ -738,7 +813,12 @@ function table2string(mytable)
 end
 
 function getPoints2table(shape)
-	x1,y1,x2,y2,x3,y3,x4,y4,x5,y5,x6,y6,x7,y7,x8,y8 = shape:getPoints()
+	local points = {shape:getPoints()}
+	local body = getShapeBody(shape)
+	if body then
+		points = {body:getWorldPoints(unpack(points))}
+	end
+	local x1,y1,x2,y2,x3,y3,x4,y4,x5,y5,x6,y6,x7,y7,x8,y8 = unpack(points)
 	if x4 == nil then
 		return {x1,y1,x2,y2,x3,y3}
 	end
@@ -755,6 +835,27 @@ function getPoints2table(shape)
 		return {x1,y1,x2,y2,x3,y3,x4,y4,x5,y5,x6,y6,x7,y7}
 	end
 	return     {x1,y1,x2,y2,x3,y3,x4,y4,x5,y5,x6,y6,x7,y7,x8,y8}
+end
+
+function getLocalPoints2table(shape)
+	local points = {shape:getPoints()}
+	local x1,y1,x2,y2,x3,y3,x4,y4,x5,y5,x6,y6,x7,y7,x8,y8 = unpack(points)
+	if x4 == nil then
+		return {x1,y1,x2,y2,x3,y3}
+	end
+	if x5 == nil then
+		return {x1,y1,x2,y2,x3,y3,x4,y4}
+	end
+	if x6 == nil then
+		return {x1,y1,x2,y2,x3,y3,x4,y4,x5,y5}
+	end
+	if x7 == nil then
+		return {x1,y1,x2,y2,x3,y3,x4,y4,x5,y5,x6,y6}
+	end
+	if x8 == nil then
+		return {x1,y1,x2,y2,x3,y3,x4,y4,x5,y5,x6,y6,x7,y7}
+	end
+	return {x1,y1,x2,y2,x3,y3,x4,y4,x5,y5,x6,y6,x7,y7,x8,y8}
 end
 
 function getrainbowcolor(i)
@@ -788,11 +889,11 @@ function getrainbowcolor(i)
 	return {r, g, b}
 end
 
-function love.keypressed( key, unicode )
+function love.keypressed(key)
 	if gamestate == nil then
 		if controls.check("return", key) then
 			gamestate = "title"
-			love.graphics.setBackgroundColor( 0, 0, 0)
+			setBackgroundColor255(0, 0, 0)
 			love.audio.play(musictitle)
 			oldtime = love.timer.getTime()
 		end
@@ -800,7 +901,7 @@ function love.keypressed( key, unicode )
 	elseif gamestate == "logo" then
 		if controls.check("return", key) then
 			gamestate = "title"
-			love.graphics.setBackgroundColor( 0, 0, 0)
+			setBackgroundColor255(0, 0, 0)
 			love.audio.play(musictitle)
 			oldtime = love.timer.getTime()
 		end
@@ -808,7 +909,7 @@ function love.keypressed( key, unicode )
 	elseif gamestate == "credits" then
 		if controls.check("return", key) then
 			gamestate = "title"
-			love.graphics.setBackgroundColor( 0, 0, 0)
+			setBackgroundColor255(0, 0, 0)
 			love.audio.play(musictitle)
 			oldtime = love.timer.getTime()
 		end
@@ -836,7 +937,7 @@ function love.keypressed( key, unicode )
 				optionsselection = 1
 			end
 		elseif controls.check("escape", key) then
-			love.event.push("q")
+			love.event.quit()
 		elseif controls.check("left", key) and playerselection > 1 then
 			playerselection = playerselection - 1
 		elseif controls.check("right", key) and playerselection < 3 then
@@ -1120,7 +1221,7 @@ function love.keypressed( key, unicode )
 	elseif gamestate == "gameBmulti" and gamestarted == false then
 		if controls.check("escape", key) then
 			if not fullscreen then
-				love.graphics.setMode( 160*scale, 144*scale, false, vsync, 0 )
+				applyWindowMode(160 * scale, 144 * scale, false, 0)
 			end
 			gamestate = "multimenu"
 			if musicno < 4 then
@@ -1130,7 +1231,7 @@ function love.keypressed( key, unicode )
 	elseif gamestate == "gameBmulti" and gamestarted == true then
 		if controls.check("escape", key) then
 			if not fullscreen then
-				love.graphics.setMode( 160*scale, 144*scale, false, vsync, 0 )
+				applyWindowMode(160 * scale, 144 * scale, false, 0)
 			end
 			gamestate = "multimenu"
 		end
@@ -1149,7 +1250,7 @@ function love.keypressed( key, unicode )
 				love.audio.play(music[musicno])
 			end
 			if not fullscreen then
-				love.graphics.setMode( 160*scale, 144*scale, false, vsync, 0 )
+				applyWindowMode(160 * scale, 144 * scale, false, 0)
 			end
 			gamestate = "multimenu"
 		end
@@ -1177,13 +1278,6 @@ function love.keypressed( key, unicode )
 				highscorename[highscoreno] = string.sub(highscorename[highscoreno], 1, highscorename[highscoreno]:len()-1)
 			end
 			
-		elseif whitelist[unicode] == true then
-			if highscorename[highscoreno]:len() < 6 then
-				cursorblink = true
-				highscorename[highscoreno] = highscorename[highscoreno] .. string.char(unicode)
-				love.audio.stop(highscorebeep)
-				love.audio.play(highscorebeep)
-			end
 		end
 	elseif string.sub(gamestate, 1, 6) == "rocket" then
 		if controls.check("return", key) then
@@ -1191,5 +1285,19 @@ function love.keypressed( key, unicode )
 			love.audio.stop(musicrocket4)
 			failed_checkhighscores()
 		end
+	end
+end
+
+function love.textinput(text)
+	if gamestate ~= "highscoreentry" or text == nil or text == "" then
+		return
+	end
+
+	local byte = string.byte(text)
+	if byte and whitelist[byte] == true and highscorename[highscoreno]:len() < 6 then
+		cursorblink = true
+		highscorename[highscoreno] = highscorename[highscoreno] .. text
+		love.audio.stop(highscorebeep)
+		love.audio.play(highscorebeep)
 	end
 end
